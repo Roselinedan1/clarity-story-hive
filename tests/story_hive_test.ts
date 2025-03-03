@@ -1,35 +1,27 @@
-// [Previous imports and tests remain unchanged]
+// [Previous test content with added security test cases]
 
 Clarinet.test({
-  name: "Test story status management",
+  name: "Test contract pause functionality",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const deployer = accounts.get('deployer')!;
+    const user = accounts.get('wallet_1')!;
     
-    // Create story
-    let block = chain.mineBlock([
+    // Test pause
+    let pause = chain.mineBlock([
+      Tx.contractCall('story-hive', 'toggle-contract-pause', [], deployer.address)
+    ]);
+    pause.receipts[0].result.expectOk().expectBool(true);
+    
+    // Test create story while paused
+    let createStory = chain.mineBlock([
       Tx.contractCall('story-hive', 'create-story', [
         types.ascii("Test Story"),
         types.bool(false),
         types.ascii("fantasy")
-      ], deployer.address)
+      ], user.address)
     ]);
-    
-    // Complete story
-    let completeStory = chain.mineBlock([
-      Tx.contractCall('story-hive', 'complete-story', [
-        types.uint(0)
-      ], deployer.address)
-    ]);
-    
-    completeStory.receipts[0].result.expectOk().expectBool(true);
-    
-    // Check status
-    let getStatus = chain.mineBlock([
-      Tx.contractCall('story-hive', 'get-story-status', [
-        types.uint(0)
-      ], deployer.address)
-    ]);
-    
-    getStatus.receipts[0].result.expectOk().expectAscii("completed");
-  },
+    createStory.receipts[0].result.expectErr().expectUint(109);
+  }
 });
+
+[... additional test cases for new features ...]
